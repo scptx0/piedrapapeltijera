@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from PIL import Image
+from PIL import Image, ImageOps
 
 TAMANO = 224
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,9 @@ def cargar_modelo():
     if _interprete is not None:
         return
 
-    from tflite_runtime.interpreter import Interpreter
+    # ai-edge-litert es el sucesor de tflite-runtime: soporta modelos exportados
+    # por versiones nuevas de TensorFlow (tflite-runtime 2.14 falla con FULLY_CONNECTED v12).
+    from ai_edge_litert.interpreter import Interpreter
 
     with open(os.path.join(BASE, "modelo.tflite"), "rb") as archivo:
         _interprete = Interpreter(model_content=archivo.read())
@@ -32,7 +34,8 @@ def cargar_modelo():
 
 def preprocesar(imagen: Image.Image) -> np.ndarray:
     """Recorte central cuadrado + resize, con píxeles 0..255 como espera el modelo."""
-    imagen = imagen.convert("RGB")
+    # Las fotos de celular suelen venir rotadas por EXIF; sin esto llegan acostadas.
+    imagen = ImageOps.exif_transpose(imagen).convert("RGB")
     lado = min(imagen.size)
     izquierda = (imagen.width - lado) // 2
     arriba = (imagen.height - lado) // 2

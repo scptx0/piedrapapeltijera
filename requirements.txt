@@ -3,4 +3,4 @@ uvicorn
 pillow
 numpy
 python-multipart
-tflite-runtime==2.14.0
+ai-edge-litert==2.3.0
